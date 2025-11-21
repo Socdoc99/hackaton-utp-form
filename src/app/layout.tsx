@@ -6,9 +6,9 @@ import { Toaster } from "@/components/ui/toaster";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Next.js Mail Form Sender Example with Server Actions",
+  title: "Hackatón UTP 2025/2",
   description:
-    "A simple example of sending an email from a Next.js form using server actions",
+    "Formulario de inscripción para el Hackatón UTP 2025/2 organizado por Santiago Ospina Calle.",
 };
 
 export default function RootLayout({

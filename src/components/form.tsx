@@ -5,194 +5,164 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import ReCAPTCHA from "react-google-recaptcha";
 import { FiMail, FiPhone, FiUser } from "react-icons/fi";
-import { sendContactForm } from "@/app/actions";
 import { useToast } from "@/components/ui/use-toast";
 import { CgSpinner } from "react-icons/cg";
 
 const formSchema = z.object({
-  nameSurname: z.string().min(1, { message: "Full name is required" }),
-  email: z.string().min(1, { message: "Email is required" }).email({
-    message: "Must be a valid email",
-  }),
-  phone: z
-    .string()
-    .min(1, { message: "Phone is required" })
-    .regex(/^(\+?1)?[2-9]\d{2}[2-9](?!11)\d{6}$/, {
-      message: "Must be a valid phone number",
-    }),
-  message: z
-    .string()
-    .min(10, { message: "Message must be at least 10 characters" })
-    .max(1000, { message: "Message must be less than 1000 characters" }),
+  nameSurname: z.string().min(1, { message: "El nombre es obligatorio" }),
+  email: z.string().email({ message: "Correo no válido" }),
+  phone: z.string().min(7, { message: "Número de teléfono no válido" }),
 });
-
 type FormData = z.infer<typeof formSchema>;
 
 export default function Form() {
   const recaptchaRef = useRef<ReCAPTCHA>(null);
+  const { toast } = useToast();
 
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<FormData>({
-    resolver: zodResolver(formSchema),
-    // You can set default values for the form here for testing purposes
-    // defaultValues: {
-    //   nameSurname: "John Doe",
-    //   email: "john@joe.com",
-    //   phone: "5555555555",
-    //   message:
-    //     "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed euismod",
-    // },
-  });
-  const { toast } = useToast();
+  } = useForm<FormData>({ resolver: zodResolver(formSchema) });
 
-const onSubmit = async (data: FormData) => {
-    try {
-      const token = await recaptchaRef.current?.executeAsync();
-      const payload = { ...data, token };
+  const baseInput =
+    "w-full bg-[#1A1B26] text-[#E0E0E0] font-mono border-2 rounded-md outline-none transition-all duration-300 placeholder:text-[#00FFAB]/60 focus:border-[#3A86FF] focus:shadow-[0_0_10px_#3A86FF40]";
+  const withIconPad = "py-2 pl-10 pr-3";
+  const borderNeon = "border-[#00FFAB]";
+  const errorBorder =
+    "border-red-500 placeholder:text-red-400/70 focus:shadow-[0_0_10px_#ff000040]";
+  const labelCls = "text-sm text-[#A0A0A0] font-mono mb-1 block";
+  const errorText = "text-red-400 text-xs mt-1 font-mono";
 
-      // Enviar al endpoint que creamos
-      const res = await fetch("/api/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: data.nameSurname,
-          email: data.email,
-        }),
-      });
+  const onSubmit = async (data: FormData) => {
+    const token = await recaptchaRef.current?.executeAsync();
+    const res = await fetch("/api/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...data, token }),
+    });
 
-      if (res.ok) {
-        toast({
-          title: "✅ Success",
-          description: "Confirmation email sent successfully!",
-        });
-        reset();
-      } else {
-        toast({
-          title: "❌ Error",
-          description: "There was a problem sending the email.",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error("Error:", error);
+    if (!res.ok) {
       toast({
         title: "❌ Error",
-        description: "Unexpected error sending email.",
+        description: "Hubo un problema al enviar la inscripción.",
         variant: "destructive",
       });
+      return;
     }
+
+    toast({ title: "✅ Enviado", description: "Inscripción registrada." });
+    reset();
+  };
+
+  const handleReset = () => {
+    reset();
+    toast({ title: "🧹 Formulario limpiado" });
   };
 
   return (
     <form className="w-full" onSubmit={handleSubmit(onSubmit)} noValidate>
+      {/* Campo Nombre */}
       <div className="mb-4">
+        <label className={labelCls}>Nombre completo</label>
         <div className="relative">
-          {errors.nameSurname?.message ? (
-            <FiUser className="w-6 h-6 absolute top-1/2 -translate-y-1/2 left-2 border-r pr-2 text-red-500" />
-          ) : (
-            <FiUser className="w-6 h-6 absolute top-1/2 -translate-y-1/2 left-2 border-r pr-2" />
-          )}
+          <FiUser
+            className={`w-5 h-5 absolute top-1/2 -translate-y-1/2 left-3 ${
+              errors.nameSurname ? "text-red-400" : "text-[#E0E0E0]"
+            }`}
+          />
           <input
-            className={`shadow appearance-none outline-none border rounded w-full py-2 pl-10 text-gray-700 leading-tight duration-300
-          ${errors.nameSurname?.message && "shadow-[0_0_0_2px] shadow-red-500"}
-          `}
             type="text"
-            placeholder="Full name"
+            placeholder="Tu nombre y apellido"
             {...register("nameSurname")}
+            className={`${baseInput} ${withIconPad} ${
+              errors.nameSurname ? errorBorder : borderNeon
+            }`}
           />
         </div>
-        {errors.nameSurname?.message && (
-          <div className="text-red-500 text-xs mt-1">
-            {errors.nameSurname?.message}
-          </div>
+        {errors.nameSurname && (
+          <div className={errorText}>{errors.nameSurname.message}</div>
         )}
       </div>
+
+      {/* Campo Email */}
       <div className="mb-4">
+        <label className={labelCls}>Correo electrónico</label>
         <div className="relative">
-          {errors.email?.message ? (
-            <FiMail className="w-6 h-6 absolute top-1/2 -translate-y-1/2 left-2 border-r pr-2 text-red-500" />
-          ) : (
-            <FiMail className="w-6 h-6 absolute top-1/2 -translate-y-1/2 left-2 border-r pr-2" />
-          )}
+          <FiMail
+            className={`w-5 h-5 absolute top-1/2 -translate-y-1/2 left-3 ${
+              errors.email ? "text-red-400" : "text-[#E0E0E0]"
+            }`}
+          />
           <input
-            className={`shadow appearance-none outline-none border rounded w-full py-2 pl-10 text-gray-700  leading-tight duration-300
-          ${errors.email?.message && "shadow-[0_0_0_2px] shadow-red-500"}
-          `}
             type="email"
-            placeholder="Email"
+            placeholder="tu@email.com"
             {...register("email")}
+            className={`${baseInput} ${withIconPad} ${
+              errors.email ? errorBorder : borderNeon
+            }`}
           />
         </div>
-        {errors.email?.message && (
-          <div className="text-red-500 text-xs mt-1">
-            {errors.email?.message}
-          </div>
+        {errors.email && (
+          <div className={errorText}>{errors.email.message}</div>
         )}
       </div>
-      <div className="mb-4">
+
+      {/* Campo Teléfono */}
+      <div className="mb-6">
+        <label className={labelCls}>Teléfono</label>
         <div className="relative">
-          {errors.phone?.message ? (
-            <FiPhone className="w-6 h-6 text-red-500 absolute top-1/2 -translate-y-1/2 left-2 border-r pr-2" />
-          ) : (
-            <FiPhone className="w-6 h-6 absolute top-1/2 -translate-y-1/2 left-2 border-r pr-2" />
-          )}
+          <FiPhone
+            className={`w-5 h-5 absolute top-1/2 -translate-y-1/2 left-3 ${
+              errors.phone ? "text-red-400" : "text-[#E0E0E0]"
+            }`}
+          />
           <input
-            className={`shadow appearance-none outline-none border rounded w-full py-2 pl-10 text-gray-700 leading-tight duration-300
-          ${errors.phone?.message && "shadow-[0_0_0_2px] shadow-red-500"}
-          `}
             type="tel"
-            placeholder="Phone"
+            placeholder="+57 300 000 0000"
             {...register("phone")}
+            className={`${baseInput} ${withIconPad} ${
+              errors.phone ? errorBorder : borderNeon
+            }`}
           />
         </div>
-        {errors.phone?.message && (
-          <div className="text-red-500 text-xs mt-1">
-            {errors.phone?.message}
-          </div>
+        {errors.phone && (
+          <div className={errorText}>{errors.phone.message}</div>
         )}
       </div>
-      <div className="mb-4">
-        <textarea
-          className={`shadow appearance-none outline-none border rounded w-full py-2 px-3 text-gray-700 leading-tight duration-300
-          ${errors.message?.message && "shadow-[0_0_0_2px] shadow-red-500"}
-          `}
-          placeholder="Message"
-          rows={5}
-          {...register("message")}
-        ></textarea>
-        {errors.message?.message && (
-          <div className="text-red-500 text-xs mt-1">
-            {errors.message?.message}
-          </div>
-        )}
-      </div>
-      <div>
+
+      {/* reCAPTCHA invisible */}
+      <div className="hidden">
         <ReCAPTCHA
           sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || ""}
           size="invisible"
           ref={recaptchaRef}
-          hl="en"
+          hl="es"
         />
       </div>
-      <div className="flex gap-10 items-center justify-between">
+
+      <div className="flex flex-col md:flex-row gap-4 items-center justify-center">
         <button
-          className={`${
-            isSubmitting
-              ? "opacity-50 cursor-not-allowed"
-              : "opacity-100 cursor-pointer"
-          } bg-black hover:bg-gray-700 text-white font-bold py-2 px-6 h-11 rounded focus:outline-none focus:shadow-outline duration-1000 transition-all`}
           type="submit"
           disabled={isSubmitting}
+          className={`font-mono px-8 h-11 rounded-md border-2 transition-all duration-300
+            ${isSubmitting ? "opacity-60 cursor-not-allowed" : "opacity-100"}
+            border-[#00FFAB] text-[#0D0D0F] bg-[#00FFAB]
+            hover:bg-transparent hover:text-[#E0E0E0]
+            hover:shadow-[0_0_16px_#00FFAB80]
+            focus:shadow-[0_0_16px_#3A86FF80] focus:border-[#3A86FF]
+          `}
         >
-          {isSubmitting ? (
-            <CgSpinner className="animate-spin w-6 h-6" />
-          ) : (
-            "Send"
-          )}
+          {isSubmitting ? <CgSpinner className="animate-spin w-6 h-6" /> : "Enviar inscripción"}
+        </button>
+
+        <button
+          type="button"
+          onClick={handleReset}
+          className="font-mono px-8 h-11 rounded-md border-2 border-[#3A86FF] text-[#3A86FF] hover:text-[#E0E0E0] hover:border-[#00FFAB] hover:shadow-[0_0_12px_#00FFAB60] bg-transparent transition-all duration-300"
+        >
+          Limpiar formulario
         </button>
       </div>
     </form>

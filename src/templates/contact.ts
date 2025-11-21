@@ -1,39 +1,42 @@
-export const contactTemplate = ` ,
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>Contact Form</title>
-  </head>
-  <body>
-    <div
-      style="
-        width: 600px;
-        margin: 0 auto;
-        padding: 10px;
-        border: 1px solid #e7e7e7;
-        border-radius: 5px;
-        font-family: sans-serif;
-      "
-    >
-      <h2><strong>You have a new message!</strong></h2>
-      <p>
-        <strong>Name:<br /> </strong> {{nameSurname}}
-      </p>
-      <p>
-        <strong>E-Mail: </strong><br />
-        {{email}}
-      </p>
-      <p>
-        <strong>Phone: </strong><br />
-        {{phone}}
-      </p>
-      <p>
-        <strong>Message: </strong><br />
-        {{message}}
-      </p>
+export const contactTemplate = `
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Nuevo mensaje de contacto</title>
+  <style>
+    body { font-family: Arial, sans-serif; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: #0b5cff; color: #fff; padding: 12px; text-align:center; }
+    .field { margin-bottom: 12px; }
+    .label { font-weight: bold; margin-bottom: 4px; }
+    .message { white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header"><h2>Nuevo mensaje desde el formulario</h2></div>
+
+    <div class="field">
+      <div class="label">Nombre:</div>
+      <div>{{nameSurname}}</div>
     </div>
-  </body>
+
+    <div class="field">
+      <div class="label">Email:</div>
+      <div>{{email}}</div>
+    </div>
+
+    <div class="field">
+      <div class="label">Teléfono:</div>
+      <div>{{phone}}</div>
+    </div>
+
+    <div class="field">
+      <div class="label">Mensaje:</div>
+      <div class="message">{{message}}</div>
+    </div>
+  </div>
+</body>
 </html>
 `;
